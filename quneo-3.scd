@@ -19,34 +19,32 @@ composite.background = Color.black;
 left = CompositeView(parent: composite, bounds: Rect(10, 10, 250, 270));
 left.background = Color.new255(127, 255, 212); // aquamarine
 
-// works till here
-
 // 16 buttons
 right = CompositeView(parent: composite, bounds: Rect(260, 10, 580, 470));
 right.background = Color.new255(255, 215, 0); // gold
-right.decorator = FlowLayout(bounds: right.bounds);
+right.decorator = FlowLayout(bounds: right.bounds, margin: 75@25, gap: 15@15);
 4.do({
 	var button;
-	button = Button.new(parent: right, bounds: 65@65);
-	button.states = [["yes", Color.black, Color.white], ["no", Color.white, Color.black]];
+	button = Button.new(parent: right, bounds: 95@95);
+	button.states = [["", Color.black, Color.white], ["", Color.white, Color.black]];
 });
 right.decorator.nextLine;
 4.do({
 	var button;
-	button = Button.new(parent: right, bounds: 65@65);
-	button.states = [["yes", Color.black, Color.white], ["no", Color.white, Color.black]];
+	button = Button.new(parent: right, bounds: 95@95);
+	button.states = [["", Color.black, Color.white], ["", Color.white, Color.black]];
 });
 right.decorator.nextLine;
 4.do({
 	var button;
-	button = Button.new(parent: right, bounds: 65@65);
-	button.states = [["yes", Color.black, Color.white], ["no", Color.white, Color.black]];
+	button = Button.new(parent: right, bounds:  95@95);
+	button.states = [["", Color.black, Color.white], ["", Color.white, Color.black]];
 });
 right.decorator.nextLine;
 4.do({
 	var button;
-	button = Button.new(parent: right, bounds: 65@65);
-	button.states = [["yes", Color.black, Color.white], ["no", Color.white, Color.black]];
+	button = Button.new(parent: right, bounds:  95@95);
+	button.states = [["", Color.black, Color.white], ["", Color.white, Color.black]];
 });
 
 
