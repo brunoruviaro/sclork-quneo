@@ -6,7 +6,7 @@
 // build smaller Composite Buttons
 // don't hardcode dimensions, use variables!
 (
-var window, composite, left, right, vader, footer, slider; // must happen first
+var window, composite, left, right, vader, footer, text, text2, slider; // must happen first
 Window.closeAll;
 window = Window.new(name: "QuNeo", bounds: Rect(275, 163, 900, 600), resizable: false).front;
 composite = CompositeView(parent: window, bounds: Rect(0, 0, 900, 600));
@@ -57,6 +57,19 @@ vader.background = Color.new255(255, 240, 245); // Lavender
 footer = CompositeView(parent: composite, bounds: Rect(285, 505, 580, 60));
 footer.background = Color.new255(176, 226, 255); // Sky Blue
 
+// text
+// text = StaticText(parent: footer, bounds: Rect(80, 10, 80, 30));
+text = StaticText(parent: footer, bounds: Rect(100, 10, 70, 30));
+text.string = "SCLOrk";
+// text.background = Color.white;
+text.align = \left;
+text.font = Font(name: "Times", size: 20, italic: true); //size
+
+text2 = StaticText(parent: footer, bounds: Rect(415, 10, 60, 30));
+text2.string = "QuNeo";
+// text2.background = Color.white;
+text2.align = \left;
+text2.font = Font(name: "Monaco", size: 20, bold: true);
 // slider
 slider = Slider.new(parent: footer, bounds: Rect(97, 35, 380, 30));
 slider.background_(Color.new255(219, 112, 147)); // pale violet red
