@@ -3,12 +3,12 @@
 // measure up QuNeo
 // refer to SCLOrkSynths
 // match up Composite View dimensions with window dimensions -- done !!
-// build smaller Composite Buttons
+// build smaller Composite Buttons -- done!!
 // don't hardcode dimensions, use variables!
 (
 // must happen first
 var window, composite, left, right, vader, footer; // main components of box model
-var top, bottom1, bottom2; // components of left: 4 buttons on top
+var top, bottom1, bottom2; // components of left: 4 buttons on top, 4 pairs on bottom left and right
 var k1, k2, nose, s1, s2, s3, s4; // components of vader: 2 knobs, a nose, 4 sliders
 var text, text2, slider, b1, b2, b3, b4; // components of footer: 2 texts, 1 slider, and 4 buttons
 
@@ -112,8 +112,8 @@ s2.background_(Color.new255(219, 112, 147)); // pale violet red
 s3 = Slider.new(parent: vader, bounds: Rect(135, 105, 30, 150));
 s3.background_(Color.new255(219, 112, 147)); // pale violet red
 
-s3 = Slider.new(parent: vader, bounds: Rect(185, 105, 30, 150));
-s3.background_(Color.new255(219, 112, 147)); // pale violet red
+s4 = Slider.new(parent: vader, bounds: Rect(185, 105, 30, 150));
+s4.background_(Color.new255(219, 112, 147)); // pale violet red
 
 // ************************************ FOOTER ***************************************
 // footer
