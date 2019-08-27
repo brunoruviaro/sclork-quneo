@@ -2,7 +2,7 @@
 // must happen first
 var window, composite, left, right, vader, footer; // main components of box model
 var top, bottom1, bottom2; // components of left: 4 buttons on top
-var up, down, k1, k2, nose, s1, s2, s3, s4; // components of vader: 2 knobs, a nose, 4 sliders
+var up, down, k1, k2, nose; // components of vader: 2 knobs, a nose, 4 sliders
 var lb, rb, mid1, mid2, text, text2, slider; // components of footer: 2 texts, 1 slider, and 4 buttons
 
 
