@@ -16,6 +16,8 @@ As SCLOrk's first technical intern, I will be documenting my journey here!
 ## Timeline:
 
 ### 28 Aug 2019
-I began this project in mid-August 2019. A week in and the UI looks in good shape:
+I began this project in mid-August 2019. A week in and the UI is in good shape:
 
 ![UI](https://github.com/tanya-sonker/sclork-quneo/blob/master/Screen%20Shot%202019-08-27%20at%204.51.19%20PM.png)
+
+Now, I will be focusing on building the mirror class!
