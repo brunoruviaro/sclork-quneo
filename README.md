@@ -19,7 +19,7 @@ As SCLOrk's first technical intern, I will be documenting my journey here!
 I began this project in mid-August 2019. A week in and the UI is in good shape:
 
 <p align="center">
-<a href="https://github.com/tanya-sonker/sclork-quneo/blob/master/Screen%20Shot%202019-08-27%20at%204.51.19%20PM.png"></a>
+<img src="https://github.com/tanya-sonker/sclork-quneo/blob/master/Screen%20Shot%202019-08-27%20at%204.51.19%20PM.png">
 v6.0: quneo-8.scd
 </p> 
 
