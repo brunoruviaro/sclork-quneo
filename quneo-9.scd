@@ -1,16 +1,33 @@
 (
-// must happen first
-var window, windowWidth, windowHeight;
-var leftTop, leftTopW, leftTopH;
-var leftBottom, leftBottomW, leftBottomH;
-var right, rightW, rightH;
-var vader, vaderW, vaderH;
-var footer, footerW, footerH;
-var up, down, k1, k2, nose; // components of vader: 2 knobs, a nose, 4 sliders
-var lb, rb, mid1, mid2, text, text2, slider; // components of footer: 2 texts, 1 slider, and 4 buttons
+var window, windowWidth, windowHeight; // main window
+var leftTop, leftTopW, leftTopH; // top left 4-button row
+var leftBottom, leftBottomW, leftBottomH; // buttons and Hsliders above vader
+var right, rightW, rightH; // 16-button main panel
+var vader, vaderW, vaderH; // darth vader (lower left box)
+var footer, footerW, footerH; // buttons and slides below 16-button panel
+var up, down, k1, k2, nose; // components of vader: 2 knobs, 1 nose, 4 Vsliders
+var lb, rb, mid1, mid2, text, text2, slider; // components of footer: 2 texts, 1 slider, 4 buttons
 
 
 Window.closeAll;
+
+/*
+
+These variables hold CompositeViews placed onto main window:
+ ___________________________
+|  leftTop   |              |
+|____________|              |
+|            |              |
+| leftBottom |     right    |
+|            |              |
+|____________|              |
+|            |              |
+|    vader   |              |
+|            |______________|
+|            |   footer     |
+|____________|______________|
+
+*/
 
 windowWidth = 815;
 windowHeight = 600;
@@ -47,10 +64,11 @@ resizable: false
 
 window.background = Color.black;
 
-// window = CompositeView(parent: window, bounds: Rect(0, 0, 900, 600));
-// window.background = Color.black;
 
-// ************************************ LEFT ***************************************
+// ================
+// *** leftTop ***
+// ================
+
 leftTop = CompositeView(
 	parent: window,
 	bounds: Rect(
@@ -61,10 +79,6 @@ leftTop = CompositeView(
 	)
 );
 
-leftTop.background = Color.red;
-
-// top buttons
-/*top = CompositeView(parent: left, bounds:Rect(0, 0, windowWidth * 1/3, 60));*/
 leftTop.decorator = FlowLayout(bounds: leftTop.bounds, margin:25@12, gap: 25@25);
 4.do({
 	var tb; // buttons on top
@@ -72,9 +86,11 @@ leftTop.decorator = FlowLayout(bounds: leftTop.bounds, margin:25@12, gap: 25@25)
 	tb.states = [["", Color.black, Color.white], ["", Color.white, Color.black]];
 });
 
-leftTop.background = Color.white;
 
-// bottom combinations
+// ==================
+// *** leftBottom ***
+// ==================
+
 
 leftBottom = CompositeView(
 	parent: window,
@@ -85,8 +101,6 @@ leftBottom = CompositeView(
 		height: leftBottomH
 	)
 );
-
-leftBottom.background = Color.rand;
 
 leftBottom.decorator = FlowLayout(
 	bounds: leftBottom.bounds,
@@ -99,31 +113,13 @@ leftBottom.decorator = FlowLayout(
 	Button(parent: leftBottom, bounds: 25@35);
 	Slider(parent: leftBottom, bounds: 170@35);
 });
-/*
-// bottom left
-bottom1 = CompositeView(parent: left, bounds: Rect(0, 60, 83, 170));
-bottom1.background = Color.rand;
-bottom1.decorator = FlowLayout(bounds: bottom1.bounds, margin: 15@15, gap: 5@15);
-8.do({
-	var lb; // lower buttons
-	lb = Button(parent:bottom1, bounds: 20@20);
-	lb.states = [["", Color.black, Color.white], ["", Color.white, Color.black]];
-});
-
-// bottom right
-bottom2 = CompositeView(parent: left, bounds: Rect(83, 65, 166, 180));
-bottom2.decorator = FlowLayout(bounds: bottom2.bounds, margin: 15@15, gap: 10@10);
-4.do({
-	var ls; //lower sliders
-	ls = Slider(parent: bottom2, bounds: 140@25);
-	ls.background = Color.white;
-});
-
-*/
 
 
-// ************************************ RIGHT ***************************************
-// 16 buttons
+// =============
+// *** right ***
+// (16-button box)
+// =============
+
 right = CompositeView(
 	parent: window,
 	bounds: Rect(
@@ -141,10 +137,11 @@ right.decorator = FlowLayout(bounds: right.bounds, margin: 12@12, gap: 12@12);
 	button.states = [["", Color.black, Color.white], ["", Color.white, Color.black]];
 });
 
-right.background = Color.green;
 
-// ********************************* DARTH VADER *************************************
-// darth vader
+// =============
+// *** vader ***
+// =============
+
 vader = CompositeView(
 	parent: window,
 	bounds: Rect(
@@ -189,20 +186,24 @@ footer = CompositeView(
 	)
 );
 
-footer.background = Color.rand;
 
-// buttons on the left layout
-lb = CompositeView(parent: footer, bounds: Rect(0, 0, 90, 60));
+// footer left buttons
+lb = CompositeView(
+	parent: footer,
+	bounds: Rect(0, 0, footerW * 1/8, footerH
+	)
+);
+
 lb.decorator = FlowLayout(bounds: lb.bounds, margin: 32@2, gap: 50@7);
 
-lb.background = Color.rand;
+
 // buttons
 2.do({
 	var b = Button(parent: lb, bounds: 25@25);
 	b.states = [["", Color.black, Color.white], ["", Color.white, Color.black]];
 });
 
-
+/*
 // upper middle part with the 2 strings
 mid1 = CompositeView(parent: footer, bounds: Rect(90, 0, 400, 30));
 mid1.decorator = FlowLayout(bounds: mid1.bounds, margin: 0@0, gap: 0@0);
@@ -218,10 +219,26 @@ text2.string = "QuNeo";
 text2.align = \right;
 text2.font = Font(name: "Monaco", size: 20, bold: true);
 text2.stringColor = Color.white;
+*/
 
-// lower middle part with slider
-mid2 = CompositeView(parent: footer, bounds: Rect(90, 30, 400, 30));
-slider = Slider.new(parent: mid2, bounds: Rect(10, 0, 380, 30));
+// footer horizontal slider
+mid2 = CompositeView(
+	parent: footer,
+	bounds: Rect(footerW * 1/8, 0, footerW * 6/8, footerH
+	)
+);
+
+
+slider = Slider.new(
+	parent: mid2,
+	bounds: Rect(
+		left: 10,
+		top: 10,
+		width: mid2.bounds.width-20,
+		height: mid2.bounds.height-20
+	)
+);
+
 slider.background_(Color.white);
 
 
@@ -234,4 +251,5 @@ rb.decorator = FlowLayout(bounds: rb.bounds, margin: 20@2, gap: 4@7);
 	var b = Button(parent: rb, bounds: 25@25);
 	b.states = [["", Color.black, Color.white], ["", Color.white, Color.black]];
 });
-)
+
+) // EOF
