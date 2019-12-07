@@ -14,7 +14,7 @@ Window.closeAll;
 /*
 
 These variables hold CompositeViews placed onto main window:
- ___________________________
+___________________________
 |  leftTop   |              |
 |____________|              |
 |            |              |
@@ -29,7 +29,7 @@ These variables hold CompositeViews placed onto main window:
 
 */
 
-windowWidth = 815;
+windowWidth = 840;
 windowHeight = 600;
 
 // leftmost column occupies 1/3 of window width
@@ -53,7 +53,7 @@ footerH = windowHeight * 1/10;
 
 
 
-window = Window.new(name: "QuNeo", bounds: Rect(
+window = Window.new(name: "SCLOrkQuNeo", bounds: Rect(
 	left: 275,
 	top: 163,
 	width: windowWidth,
@@ -79,7 +79,7 @@ leftTop = CompositeView(
 	)
 );
 
-leftTop.decorator = FlowLayout(bounds: leftTop.bounds, margin:25@12, gap: 25@25);
+leftTop.decorator = FlowLayout(bounds: leftTop.bounds, margin:25@20, gap: 25@25);
 4.do({
 	var tb; // buttons on top
 	tb = Button(parent: leftTop, bounds: 35@35);
@@ -130,7 +130,7 @@ right = CompositeView(
 	)
 );
 
-right.decorator = FlowLayout(bounds: right.bounds, margin: 12@12, gap: 12@12);
+right.decorator = FlowLayout(bounds: right.bounds, margin: 12@12, gap: 15@15);
 16.do({
 	var button;
 	button = Button.new(parent: right, bounds: 120@120);
@@ -152,30 +152,40 @@ vader = CompositeView(
 	)
 );
 
-vader.background = Color.gray;
+// vader.background = Color.gray;
 
-up = CompositeView(parent: vader, bounds: Rect(0, 0, vaderW, vaderH * 1/3));
-up.background = Color.rand;
-// knobs
-k1 = Knob(parent: vader, bounds: Rect(15, 15, 95, 95));
-k2 = Knob(parent: vader, bounds: Rect(140, 15, 95, 95));
+// , bounds: Rect(140, 15, 95, 95)
 
-// nose
-nose = Button(parent: vader, bounds: Rect(vaderW / 2 -10, 75, 15, 15));
-nose.states = [["", Color.black, Color.white], ["", Color.white, Color.black]];
+k1 = Knob(parent: vader).minHeight_(105);
+k2 = Knob(parent: vader).minHeight_(105);
 
-down = CompositeView(parent: vader, bounds: Rect(0, up.bounds.height, vaderW, vaderH * 2/3));
+// nose is hard coded in the right spot
+nose = Button(parent: vader, bounds: Rect(vader.bounds.width / 2 - 15, 95, 30, 30));
 
-down.background = Color.rand;
+vader.layout = VLayout(
+	HLayout(
+		k1, k2
 
-down.decorator = FlowLayout(bounds: down.bounds, margin: 35@10, gap: 20@0);
-4.do({
-	var slider = Slider.new(parent: down, bounds: 30@150);
-	slider.background_(Color.white);
-});
+	),
+	10, // empty space
+	HLayout(
+		10,
+		Slider.new(parent: vader),
+		10,
+		Slider.new(parent: vader),
+		10,
+		Slider.new(parent: vader),
+		10,
+		Slider.new(parent: vader),
+		10
+	)
+);
 
-// ************************************ FOOTER ***************************************
-// footer
+
+// ===============
+// *** footer ***
+// ===============
+
 footer = CompositeView(
 	parent: window,
 	bounds: Rect(
@@ -186,70 +196,23 @@ footer = CompositeView(
 	)
 );
 
+slider = Slider(footer).orientation_(\horizontal);
 
-// footer left buttons
-lb = CompositeView(
-	parent: footer,
-	bounds: Rect(0, 0, footerW * 1/8, footerH
-	)
+footer.layout = HLayout(
+	2,
+	// footer left buttons
+	VLayout(
+		Button(parent: footer),
+		Button(parent: footer)
+	),
+	// footer long slider
+	[slider, stretch: 1],
+	// foitems: oter right buttons
+	VLayout(
+		Button(parent: footer),
+		Button(parent: footer)
+	),
+	15
 );
-
-lb.decorator = FlowLayout(bounds: lb.bounds, margin: 32@2, gap: 50@7);
-
-
-// buttons
-2.do({
-	var b = Button(parent: lb, bounds: 25@25);
-	b.states = [["", Color.black, Color.white], ["", Color.white, Color.black]];
-});
-
-/*
-// upper middle part with the 2 strings
-mid1 = CompositeView(parent: footer, bounds: Rect(90, 0, 400, 30));
-mid1.decorator = FlowLayout(bounds: mid1.bounds, margin: 0@0, gap: 0@0);
-
-text = StaticText(parent: mid1, bounds: Rect(0, 0, 200, 30));
-text.string = "SCLOrk";
-text.align = \left;
-text.font = Font(name: "Times", size: 20, italic: true);
-text.stringColor = Color.white;
-
-text2 = StaticText(parent: mid1, bounds: Rect(200, 0, 200, 30));
-text2.string = "QuNeo";
-text2.align = \right;
-text2.font = Font(name: "Monaco", size: 20, bold: true);
-text2.stringColor = Color.white;
-*/
-
-// footer horizontal slider
-mid2 = CompositeView(
-	parent: footer,
-	bounds: Rect(footerW * 1/8, 0, footerW * 6/8, footerH
-	)
-);
-
-
-slider = Slider.new(
-	parent: mid2,
-	bounds: Rect(
-		left: 10,
-		top: 10,
-		width: mid2.bounds.width-20,
-		height: mid2.bounds.height-20
-	)
-);
-
-slider.background_(Color.white);
-
-
-// buttons on the right layout
-rb = CompositeView(parent: footer, bounds: Rect(490, 0, 90, 60));
-rb.decorator = FlowLayout(bounds: rb.bounds, margin: 20@2, gap: 4@7);
-
-// buttons
-2.do({
-	var b = Button(parent: rb, bounds: 25@25);
-	b.states = [["", Color.black, Color.white], ["", Color.white, Color.black]];
-});
 
 ) // EOF

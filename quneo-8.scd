@@ -78,6 +78,8 @@ down.decorator = FlowLayout(bounds: down.bounds, margin: 35@0, gap: 20@0);
 // footer
 footer = CompositeView(parent: composite, bounds: Rect(285, 505, 580, 60));
 
+footer.background = Color.rand;
+
 // buttons on the left layout
 lb = CompositeView(parent: footer, bounds: Rect(0, 0, 90, 60));
 lb.decorator = FlowLayout(bounds: lb.bounds, margin: 32@2, gap: 50@7);
