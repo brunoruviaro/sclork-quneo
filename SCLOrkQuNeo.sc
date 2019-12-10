@@ -130,19 +130,19 @@ SCLOrkQuNeo {
 			);
 			// buttons on top left
 			buttonArray[i] = Button(parent: leftTop, bounds: 35@35)
-			.states_([[i, Color.gray, Color.white]])
+			.states_([
+				[i, Color.gray, Color.white],
+				[i, Color.white, downColor] // color when pushed in and held
+			])
 			.name_(i)
 			.mouseDownAction_({ |vel|
-				// color when pushed in and held
-				buttonArray[i].states = [[i, Color.white, downColor]];
+				buttonArray[i].valueAction = 1;
 				// [buttonArray[i].name, "down"].postln;
 				this.onUIButtonChange(buttonArray[i].name.asInteger, if(vel.isNumber, {vel}, {"down"}))
 			})
 			.action_({ |vel|
-				// reset color when button is released
-				buttonArray[i].states = [[i, Color.gray, Color.white]];
 				// "note off" action
-				// [buttonArray[i].name, "up"].postln;
+				[buttonArray[i].name, buttonArray[i].value].postln;
 				this.onUIButtonChange(buttonArray[i].name.asInteger, if(vel.isNumber, {vel}, {"up"}))
 			})
 		});
