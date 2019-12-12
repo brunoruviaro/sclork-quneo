@@ -19,9 +19,12 @@ I need to come up with a way to let user of GUI select QuNeo Preset 1 or 2.
 In preset 1, 16 buttons need to behave in this 'one shot' mode like other buttons.
 In preset 2, 16 buttons behave in the usual click and stay on mode, until clicked again to turn off.
 
-GUI has no way to tell which mode QuNeo is in, and it does not matter.
-
 So the user needs to select GUI mode, "One-shot" or "Stay On" (preset 1 or 2).
+
+This is useful only when player is using GUI only (no QuNeo connected).
+GUI has no way to tell which mode QuNeo is in, and it does not matter.
+If using actual QuNeo, GUI should mirror its behavior.
+
 
 
 
@@ -224,6 +227,12 @@ SCLOrkQuNeo {
 		Array.fill(16*4, { |i|
 			var index = i.mod(16);
 			var layer = i.div(16);
+			var buttonTextColor = switch(layer,
+				0, {Color.gray},
+				1, {Color.green},
+				2, {Color.new(1, 0.6)},
+				3, {Color.red}
+			);
 			var midinote;
 			// use midinote numbers as button names / labels:
 			["before", i].postln;
@@ -232,8 +241,8 @@ SCLOrkQuNeo {
 			buttonArray[midinote] = Button.new(right[layer], 120@120);
 			buttonArray[midinote].name = midinote;
 			buttonArray[midinote].states_([
-				[midinote, Color.gray, Color.white],
-				[midinote, Color.white, Color.black]
+				[midinote, buttonTextColor, Color.white],
+				[midinote, buttonTextColor, Color.black]
 			]);
 			buttonArray[midinote].action_({ |vel| this.onUIButtonChange(buttonArray[midinote].name.asInteger, vel) })
 		});
@@ -376,6 +385,7 @@ SCLOrkQuNeo {
 						).start;
 
 						// ["MIDIdef", vel, note].postln;
+
 					},
 					chan: midiChannel,
 					srcID: midiPort.uid);
