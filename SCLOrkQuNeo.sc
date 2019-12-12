@@ -123,10 +123,10 @@ SCLOrkQuNeo {
 		[0, 24, 25, 26].do({ |i|
 			var downColor =
 			switch( i,
-			0, {Color.white},
-			24, {Color.red},
-			25, {Color.yellow},
-			26, {Color.green}
+				0, {Color.white},
+				24, {Color.red},
+				25, {Color.yellow},
+				26, {Color.green}
 			);
 			// buttons on top left
 			buttonArray[i] = Button(parent: leftTop, bounds: 35@35)
@@ -178,9 +178,10 @@ SCLOrkQuNeo {
 		// =============
 		// *** right ***
 		// (16-button box)
+		// 4 layers x 16 buttons
 		// =============
 
-		// FlowLayout would number buttons from left to right, top to bottom.
+		// Adding buttons through FlowLayout number buttons from left to right, top to bottom.
 		// However, we want to follow the midinote mapping scheme of SCLOrk QuNeo presets,
 		// which start from midinote 36 at lower left, then go left to right and bottom up.
 		// This array is used for that purpose.
@@ -191,30 +192,67 @@ SCLOrkQuNeo {
 			36, 37, 38, 39
 		];
 
-		right = CompositeView(
-			parent: window,
-			bounds: Rect(
-				left: leftTopW,
-				top: 0,
-				width: rightW,
-				height: rightH;
-			)
-		);
+		// Create array with 4 CompositeViews layered on top of each other
+		// Each panel will hold 16 buttons
+		// right[0] -> midinotes 36 to 51
+		// right[1] -> midinotes 52 to 67
+		// right[2] -> midinotes 68 to 83
+		// right[3] -> midinotes 84 to 89
+		right = Array.fill(4, {
+			CompositeView(
+				parent: window,
+				bounds: Rect(
+					left: leftTopW,
+					top: 0,
+					width: rightW,
+					height: rightH;
+				)
+			);
+		});
 
-		right.decorator = FlowLayout(bounds: right.bounds, margin: 12@12, gap: 15@15);
+		right.do({ |cv| cv.decorator = FlowLayout(
+			bounds: cv.bounds,
+			margin: 12@12,
+			gap: 15@15
+		);
+		});
+
+		right[0].front;
 
 		// Populate buttonArray with 16 buttons of main panel
 		// Buttons get assigned into array slots corresponding to their midinote number
-		buttonNamesAsMidinotes.do({ |i|
-			buttonArray[i] = Button.new(right, 120@120);
-			buttonArray[i].name = i;
-			buttonArray[i].states_([
-				[i, Color.gray, Color.white],
-				[i, Color.white, Color.red]
+		Array.fill(16*4, { |i|
+			var index = i.mod(16);
+			var layer = i.div(16);
+			var midinote;
+			// use midinote numbers as button names / labels:
+			["before", i].postln;
+			midinote = buttonNamesAsMidinotes[index] + (16 * layer);
+			["after", midinote].postln;
+			buttonArray[midinote] = Button.new(right[layer], 120@120);
+			buttonArray[midinote].name = midinote;
+			buttonArray[midinote].states_([
+				[midinote, Color.gray, Color.white],
+				[midinote, Color.white, Color.black]
 			]);
-			buttonArray[i].action_({ |vel| this.onUIButtonChange(buttonArray[i].name.asInteger, vel) })
+			buttonArray[midinote].action_({ |vel| this.onUIButtonChange(buttonArray[midinote].name.asInteger, vel) })
 		});
 
+
+		// first layer is on top at start
+		// right[0].front;
+
+		/*
+		buttonNamesAsMidinotes.do({ |i|
+		buttonArray[i] = Button.new(right, 120@120);
+		buttonArray[i].name = i;
+		buttonArray[i].states_([
+		[i, Color.gray, Color.white],
+		[i, Color.white, Color.red]
+		]);
+		buttonArray[i].action_({ |vel| this.onUIButtonChange(buttonArray[i].name.asInteger, vel) })
+		});
+		*/
 
 		// =============
 		// *** vader ***
@@ -245,6 +283,11 @@ SCLOrkQuNeo {
 			["", Color.gray, Color.new(1, 0.6)], // orange
 			["", Color.gray, Color.red],
 		];
+
+		// change 16-button layer:
+		nose.action = { |button|
+			right[button.value].front;
+		};
 
 		vader.layout = VLayout(
 			HLayout(
@@ -323,8 +366,8 @@ SCLOrkQuNeo {
 								buttonArray[note].mouseDownAction.value(vel)
 								/*
 								if( buttonArray[note].mouseDownAction.notNil,
-									{ buttonArray[note].mouseDownAction.value(vel) },
-									{ buttonArray[note].action.value(vel) }
+								{ buttonArray[note].mouseDownAction.value(vel) },
+								{ buttonArray[note].action.value(vel) }
 								)
 								*/
 
