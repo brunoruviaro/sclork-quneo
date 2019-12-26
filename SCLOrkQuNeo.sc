@@ -139,22 +139,24 @@ SCLOrkQuNeo {
 			)
 		);
 
-		leftTop.decorator = FlowLayout(bounds: leftTop.bounds, margin:25@20, gap: 25@25);
+		// leftTop.background = Color.green;
+
+		// leftTop.decorator = FlowLayout(bounds: leftTop.bounds, margin:25@20, gap: 25@25);
 
 		// Button 126 allows user to switch GUI from Preset 3 (Normal) to Preset 4 (Toggle)
 		// I use numbers 3 and 4 to match corresponding Preset Numbers in QuNeo.
 		// Button 126 will *not* respond to MIDI -- it's a GUI-only option.
-		buttonArray[126] = Button(parent: leftTop, bounds: 35@35)
+		buttonArray[126] = Button.new()
 		.states_([
-			["No", Color.black, Color.white],
-			["To", Color.white, Color.black]
+			["Normal", Color.black, Color.white],
+			["Toggle", Color.white, Color.black]
 		])
 		.action_({ |b|
 			guiPreset = if(b.value==0, {\normal}, {\toggle}); // switch between presets
 			["Current preset", guiPreset].postln;
 		});
 
-		// Create next three buttons on topLeft: QuNeo's diamond, square, triangle
+		// Create three other topLeft buttons: QuNeo's diamond, square, triangle
 		// Button numbers correspond to QuNeo preset midinote numbers.
 		// Buttons are stored at array slot corresponding to midinote number
 		// These buttons only have velocity 0 and 127, nothing in between
@@ -165,7 +167,7 @@ SCLOrkQuNeo {
 				25, {Color.yellow},
 				26, {Color.green}
 			);
-			buttonArray[midinote] = Button(parent: leftTop, bounds: 35@35)
+			buttonArray[midinote] = Button.new()
 			.states_([
 				[midinote, Color.black, Color.white],
 				[midinote, Color.black, downColor] // color when pushed in and held
@@ -186,6 +188,24 @@ SCLOrkQuNeo {
 				)});
 			})
 		});
+
+		// Place buttons into leftTop layout
+		leftTop.layout = HLayout(
+			// nil, // empty space
+			[buttonArray[126], stretch: 2],
+			[buttonArray[24], stretch: 0],
+			[buttonArray[25], stretch: 0],
+			[buttonArray[26], stretch: 0],
+			// 20,
+			// buttonArray[24],
+			// buttonArray[25],
+			// buttonArray[26],
+			// 20
+		);
+
+
+
+
 
 		// ==================
 		// *** leftBottom ***
@@ -491,7 +511,15 @@ SCLOrkQuNeo {
 							if(guiPreset==\normal, {
 								buttonArray[midinote].mouseDownAction.value(velocity);
 							}, { // if toggle,
-								buttonArray[midinote].valueAction = 1 - buttonArray[midinote].value;
+								// turn on if off; turn off if on:
+								buttonArray[midinote].value = 1 - buttonArray[midinote].value;
+								// run action with incoming velocity if button is being turned on,
+								// otherwise consider it a "note off" with velocity 0:
+								if(buttonArray[midinote].value==1, {
+									buttonArray[midinote].action.value(velocity);
+								}, {
+									buttonArray[midinote].action.value(0);
+								});
 							})
 						}.defer;
 					},
