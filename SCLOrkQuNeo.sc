@@ -1,10 +1,6 @@
 
 /*
-MIDIIn.connectAll;
-
-MIDIClient.init;
 z = SCLOrkQuNeo.new;
-z.onConnectMIDI(true);
 z.onButtonChange = { |velocity, midinote| ["WOW", velocity, midinote].postln };
 
 
@@ -44,6 +40,7 @@ ___________________________
 
 SCLOrkQuNeo {
 	var buttonArray, buttonNamesAsMidinotes;
+	var sliderArray;
 	var window, windowWidth, windowHeight; // main window
 	var leftTop, leftTopW, leftTopH; // top left 4-button row
 	var leftBottom, leftBottomW, leftBottomH; // buttons and Hsliders above vader
@@ -75,7 +72,12 @@ SCLOrkQuNeo {
 		midiIsOn = false;
 
 		// create empty button array to hold all Buttons
+		// (each button stored at index corresponding to its midinote number)
 		buttonArray = Array.newClear(127);
+
+		// create empty array to hold all sliders
+		// (each slider stored at index corresponding to its midi cc number)
+		sliderArray = Array.newClear(127);
 
 		// create main window
 		windowWidth = 840;
@@ -133,18 +135,41 @@ SCLOrkQuNeo {
 			parent: window,
 			bounds: Rect(
 				left: 0,
-				top: 0,
+				top: 5,
 				width: leftTopW,
 				height: leftTopH
 			)
 		);
 
-		// leftTop.background = Color.green;
 
-		// leftTop.decorator = FlowLayout(bounds: leftTop.bounds, margin:25@20, gap: 25@25);
+		// Button 125 turns MIDI on and off.
+		// Button 125 will *not* respond to MIDI -- it's a GUI-only option.
+		buttonArray[125] = Button.new()
+		.states_([
+			["MIDI OFF", Color.black, Color.white],
+			["MIDI ON", Color.white, Color.blue]
+		])
+		.action_({ |b|
+			if(b.value==1, {
+				{
+					"Waiting for MIDIClient to initialize...".postln;
+					MIDIClient.init;
+					5.wait;
+					if(MIDIClient.initialized, {
+						this.onConnectMIDI(true)
+					}, {
+						"Failed to initialize MIDI".postln;
+					});
+				}.fork;
+			}, {
+				"midi off".postln;
+				this.onConnectMIDI(false)
 
-		// Button 126 allows user to switch GUI from Preset 3 (Normal) to Preset 4 (Toggle)
-		// I use numbers 3 and 4 to match corresponding Preset Numbers in QuNeo.
+			});
+		})
+		.minWidth_(65);
+
+		// Button 126 allows user to switch GUI from Preset Normal to Preset Toggle
 		// Button 126 will *not* respond to MIDI -- it's a GUI-only option.
 		buttonArray[126] = Button.new()
 		.states_([
@@ -154,7 +179,8 @@ SCLOrkQuNeo {
 		.action_({ |b|
 			guiPreset = if(b.value==0, {\normal}, {\toggle}); // switch between presets
 			["Current preset", guiPreset].postln;
-		});
+		})
+		.minWidth_(65);
 
 		// Create three other topLeft buttons: QuNeo's diamond, square, triangle
 		// Button numbers correspond to QuNeo preset midinote numbers.
@@ -187,24 +213,26 @@ SCLOrkQuNeo {
 						midinote: midinote
 				)});
 			})
+			.minHeight_(42)
 		});
 
 		// Place buttons into leftTop layout
 		leftTop.layout = HLayout(
-			// nil, // empty space
-			[buttonArray[126], stretch: 2],
-			[buttonArray[24], stretch: 0],
-			[buttonArray[25], stretch: 0],
-			[buttonArray[26], stretch: 0],
+			10, // empty space
+			VLayout(
+				[buttonArray[125], align: \bottom],
+				[buttonArray[126], align: \top]
+			),
+			15,
+			[buttonArray[24], align: \bottom],
+			[buttonArray[25], align: \bottom],
+			[buttonArray[26], align: \bottom],
 			// 20,
 			// buttonArray[24],
 			// buttonArray[25],
 			// buttonArray[26],
-			// 20
+			20
 		);
-
-
-
 
 
 		// ==================
@@ -228,12 +256,16 @@ SCLOrkQuNeo {
 			gap: 7@20
 		);
 
-		4.do({
-			Button(parent: leftBottom, bounds: 25@35);
-			Button(parent: leftBottom, bounds: 25@35);
-			Slider(parent: leftBottom, bounds: 170@35);
+		[
+			[11, 12, 0], // button #, button #, horizontal slider CC#
+			[13, 14, 1],
+			[15, 16, 2],
+			[17, 18, 3]
+		].do({ |i|
+			buttonArray[i[0]] = Button(parent: leftBottom, bounds: 25@35);
+			buttonArray[i[1]] = Button(parent: leftBottom, bounds: 25@35);
+			sliderArray[i[2]] = Slider(parent: leftBottom, bounds: 170@35);
 		});
-
 
 		// =============
 		// *** right ***
@@ -312,7 +344,6 @@ SCLOrkQuNeo {
 
 				this.onUIButtonChange(velocity, midinote);
 
-				["from button action", velocity, midinote].postln;
 				// Send LED commands to QuNeo if applicable:
 				if(midiIsOn, {
 
@@ -481,10 +512,13 @@ SCLOrkQuNeo {
 			midiPort = MIDIIn.findPort("QUNEO", "QUNEO MIDI 1");
 			// .notNil or: MIDIIn.findPort("QUNEO", "QUNEO").notNil;
 
-			midiPort.postln;
-			midiPort.uid.postln;
-
 			if (midiPort.notNil, {
+
+				"QuNeo found:".postln;
+				midiPort.postln;
+				"Make sure you are in QuNeo preset #3:".postln;
+				"1. Push small round button on top left corner of QuNeo".postln;
+				"2. Push pad #3 to select the third preset".postln;
 
 				MIDIdef.noteOn(
 					key: \nose,
@@ -548,8 +582,9 @@ SCLOrkQuNeo {
 				).permanent_(true);
 
 			}, {
-				"MIDIIn unable to find QuNeo".postln;
-				// midi_button.value = 0;
+				"Unable to find QuNeo".postln;
+				this.isPhysicalDeviceConnected(verbose: true);
+				{ buttonArray[125].value = 0 }.defer;
 			});
 		}, {
 			"free MIDIdefs".postln;
