@@ -112,20 +112,11 @@ SCLOrkQuNeo {
 
 		window.background = Color.black;
 
-
-		// window.onClose = {};
-
-		/*
-
-		{
-		"free MIDIdefs".postln;
-		MIDIdef.noteOn(\nose).free;
-		MIDIdef.noteOn(\on).free;
-		MIDIdef.noteOff(\off).free;
-		}
-
-		*/
-
+		window.onClose = {
+			"Closed GUI, freeing all MIDIdefs".postln;
+			MIDIdef.freeAll;
+			// add code to turn off all LEDs
+		};
 
 		// ================
 		// *** leftTop ***
@@ -658,13 +649,8 @@ SCLOrkQuNeo {
 				{ buttonArray[125].value = 0 }.defer;
 			});
 		}, {
-			"free MIDIdefs".postln;
-			MIDIdef.noteOn(\nose).free;
-			MIDIdef.noteOn(\padsOn).free;
-			MIDIdef.noteOff(\padsOff).free;
-			MIDIdef.noteOn(\noteOnOtherButtons).free;
-			MIDIdef.noteOn(\noteOffOtherButtons).free;
-			M
+			"free all MIDIdefs".postln;
+			MIDIdef.freeAll;
 		});
 	}
 
