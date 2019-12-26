@@ -118,10 +118,10 @@ SCLOrkQuNeo {
 		/*
 
 		{
-			"free MIDIdefs".postln;
-			MIDIdef.noteOn(\nose).free;
-			MIDIdef.noteOn(\on).free;
-			MIDIdef.noteOff(\off).free;
+		"free MIDIdefs".postln;
+		MIDIdef.noteOn(\nose).free;
+		MIDIdef.noteOn(\on).free;
+		MIDIdef.noteOff(\off).free;
 		}
 
 		*/
@@ -256,15 +256,40 @@ SCLOrkQuNeo {
 			gap: 7@20
 		);
 
+
+		// Create leftBottom buttons and sliders, store them into proper arrays & indices
 		[
 			[11, 12, 0], // button #, button #, horizontal slider CC#
 			[13, 14, 1],
 			[15, 16, 2],
 			[17, 18, 3]
-		].do({ |i|
-			buttonArray[i[0]] = Button(parent: leftBottom, bounds: 25@35);
-			buttonArray[i[1]] = Button(parent: leftBottom, bounds: 25@35);
-			sliderArray[i[2]] = Slider(parent: leftBottom, bounds: 170@35);
+		].do({ |row|
+			// Two buttons...
+			2.do({ |i|
+				var midinote = row[i];
+				buttonArray[midinote] = Button(parent: leftBottom, bounds: 25@35)
+				.states_([
+					[midinote, Color.black, Color.white],
+					[midinote, Color.white, Color.black]
+				])
+				.mouseDownAction_({
+					buttonArray[midinote].valueAction = 1;
+					this.onUIButtonChange(
+						velocity: 127,
+						midinote: midinote
+					);
+				})
+				.action_({ |button|
+					// "note off" action
+					if(button.value==0, {
+						this.onUIButtonChange(
+							velocity: 0,
+							midinote: midinote
+					)});
+				})
+			});
+			// ... followed by a horizontal slider
+			sliderArray[row[2]] = Slider(parent: leftBottom, bounds: 170@35);
 		});
 
 		// =============
@@ -581,6 +606,28 @@ SCLOrkQuNeo {
 					// srcID: midiPort.uid
 				).permanent_(true);
 
+				MIDIdef.noteOn(
+					key: \left_11_18_noteOn,
+					func: { | velocity, midinote |
+						{buttonArray[midinote].mouseDownAction.value(velocity)}.defer;
+					},
+					noteNum: (11..18), // left side 'arrow' buttons
+					chan: midiChannel,
+					// srcID: midiPort.uid
+				).permanent_(true);
+
+
+				MIDIdef.noteOff(
+					key: \left_11_18_noteOff,
+					func: { | velocity, midinote |
+						{buttonArray[midinote].valueAction = 0}.defer;
+					},
+					noteNum: (11..18), // left side 'arrow' buttons
+					chan: midiChannel,
+					// srcID: midiPort.uid
+				).permanent_(true);
+
+
 			}, {
 				"Unable to find QuNeo".postln;
 				this.isPhysicalDeviceConnected(verbose: true);
@@ -590,6 +637,7 @@ SCLOrkQuNeo {
 			"free MIDIdefs".postln;
 			MIDIdef.noteOn(\nose).free;
 			MIDIdef.noteOn(\padsOn).free;
+			MIDIdef.noteOn(\left_11_18_noteOn).free;
 			MIDIdef.noteOff(\padsOff).free;
 		});
 	}
