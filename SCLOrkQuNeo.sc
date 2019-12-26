@@ -499,21 +499,45 @@ SCLOrkQuNeo {
 			)
 		);
 
+		[20, 21, 22, 23].do({ |midinote|
+			buttonArray[midinote] = Button.new(parent: footer)
+			.states_([
+					[midinote, Color.black, Color.white],
+					[midinote, Color.white, Color.black]
+				])
+				.mouseDownAction_({
+					buttonArray[midinote].valueAction = 1;
+					this.onUIButtonChange(
+						velocity: 127,
+						midinote: midinote
+					);
+				})
+				.action_({ |button|
+					// "note off" action
+					if(button.value==0, {
+						this.onUIButtonChange(
+							velocity: 0,
+							midinote: midinote
+					)});
+				})
+			.maxWidth_(55)
+		});
+
 		slider = Slider(footer).orientation_(\horizontal);
 
 		footer.layout = HLayout(
 			2,
 			// footer left buttons
 			VLayout(
-				Button(parent: footer),
-				Button(parent: footer)
+				buttonArray[20],
+				buttonArray[21]
 			),
 			// footer long slider
 			[slider, stretch: 1],
-			// foitems: oter right buttons
+			// footer right buttons
 			VLayout(
-				Button(parent: footer),
-				Button(parent: footer)
+				buttonArray[22],
+				buttonArray[23]
 			),
 			15
 		);
@@ -607,22 +631,22 @@ SCLOrkQuNeo {
 				).permanent_(true);
 
 				MIDIdef.noteOn(
-					key: \left_11_18_noteOn,
+					key: \noteOnOtherButtons,
 					func: { | velocity, midinote |
 						{buttonArray[midinote].mouseDownAction.value(velocity)}.defer;
 					},
-					noteNum: (11..18), // left side 'arrow' buttons
+					noteNum: (11..18)++(20..26), // all other non-pad buttons except nose
 					chan: midiChannel,
 					// srcID: midiPort.uid
 				).permanent_(true);
 
 
 				MIDIdef.noteOff(
-					key: \left_11_18_noteOff,
+					key: \noteOffOtherButtons,
 					func: { | velocity, midinote |
 						{buttonArray[midinote].valueAction = 0}.defer;
 					},
-					noteNum: (11..18), // left side 'arrow' buttons
+					noteNum: (11..18)++(20..26),
 					chan: midiChannel,
 					// srcID: midiPort.uid
 				).permanent_(true);
@@ -637,8 +661,10 @@ SCLOrkQuNeo {
 			"free MIDIdefs".postln;
 			MIDIdef.noteOn(\nose).free;
 			MIDIdef.noteOn(\padsOn).free;
-			MIDIdef.noteOn(\left_11_18_noteOn).free;
 			MIDIdef.noteOff(\padsOff).free;
+			MIDIdef.noteOn(\noteOnOtherButtons).free;
+			MIDIdef.noteOn(\noteOffOtherButtons).free;
+			M
 		});
 	}
 
