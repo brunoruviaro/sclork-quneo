@@ -18,7 +18,6 @@ I ended on Wed Dec 19 with
 - NEXT STEPS: create MIDIdefs for sliders and other buttons
 - Create MIDI on/off button on GUI
 - window.onClose should free all MIDIdefs and whatever else needed
-- In Toggle mode, velocities are not going through -- fix
 
 
 
@@ -145,7 +144,9 @@ SCLOrkQuNeo {
 				{
 					"Waiting for MIDIClient to initialize...".postln;
 					MIDIClient.init;
-					5.wait;
+					3.wait;
+					"Almost there...".postln;
+					1.wait;
 					if(MIDIClient.initialized, {
 						this.onConnectMIDI(true)
 					}, {
@@ -277,6 +278,14 @@ SCLOrkQuNeo {
 							velocity: 0,
 							midinote: midinote
 					)});
+					// Send LEDs back to QuNeo if applicable
+					if(midiIsOn, {
+						if(buttonArray[midinote].value==0, {
+							this.prSendOtherLEDs(midinote, 0)
+						}, {
+							this.prSendOtherLEDs(midinote, 127)
+						})
+					});
 				})
 			});
 			// ... followed by a horizontal slider
@@ -342,44 +351,22 @@ SCLOrkQuNeo {
 				// mouseDownAction only runs if we are in Normal mode, not Toggle mode.
 				if(guiPreset==\normal, {
 					velocity = if(velocity.isNumber, {velocity}, {127});
-
 					buttonArray[midinote].value = 1; // display button as active
-					buttonArray[midinote].action.value(velocity); // run action right away, pass vel
-
-					// buttonArray[midinote].valueAction = 1;
-					/*					this.onUIButtonChange(velocity, midinote);
-					// Send LED commands to QuNeo if applicable:
-					if(midiIsOn, {
-					this.prSendPadLEDs(midinote, \red)
-					});*/
+					buttonArray[midinote].action.value(velocity); // run action right away, pass velocity
 				});
 			})
 			.action_({ |velocity|
 				// is incoming arg a number? (if not, it's a Button)
 				velocity = if(velocity.isNumber, {velocity}, {velocity.value * 127});
-
 				this.onUIButtonChange(velocity, midinote);
 
 				// Send LED commands to QuNeo if applicable:
 				if(midiIsOn, {
-
-					if((guiPreset==\normal), {
-						if(buttonArray[midinote].value==0, {
-							this.prSendPadLEDs(midinote, \off)
-						}, {
-							this.prSendPadLEDs(midinote, \red)
-						})
-					});
-
-					if(guiPreset==\toggle, {
-						if(buttonArray[midinote].value==0, {
-							"off".postln;
-							this.prSendPadLEDs(midinote, \off)
-						}, {
-							"red".postln;
-							this.prSendPadLEDs(midinote, \red)
-						})
-					});
+					if(buttonArray[midinote].value==0, {
+						this.prSendPadLEDs(midinote, \off)
+					}, {
+						this.prSendPadLEDs(midinote, \red)
+					})
 				})
 			})
 		});
@@ -493,24 +480,32 @@ SCLOrkQuNeo {
 		[20, 21, 22, 23].do({ |midinote|
 			buttonArray[midinote] = Button.new(parent: footer)
 			.states_([
-					[midinote, Color.black, Color.white],
-					[midinote, Color.white, Color.black]
-				])
-				.mouseDownAction_({
-					buttonArray[midinote].valueAction = 1;
+				[midinote, Color.black, Color.white],
+				[midinote, Color.white, Color.black]
+			])
+			.mouseDownAction_({
+				buttonArray[midinote].valueAction = 1;
+				this.onUIButtonChange(
+					velocity: 127,
+					midinote: midinote
+				);
+			})
+			.action_({ |button|
+				// "note off" action
+				if(button.value==0, {
 					this.onUIButtonChange(
-						velocity: 127,
+						velocity: 0,
 						midinote: midinote
-					);
-				})
-				.action_({ |button|
-					// "note off" action
-					if(button.value==0, {
-						this.onUIButtonChange(
-							velocity: 0,
-							midinote: midinote
-					)});
-				})
+				)});
+				// Send LEDs back to QuNeo if applicable
+				if(midiIsOn, {
+					if(buttonArray[midinote].value==0, {
+						this.prSendOtherLEDs(midinote, 0)
+					}, {
+						this.prSendOtherLEDs(midinote, 127)
+					})
+				});
+			})
 			.maxWidth_(55)
 		});
 
@@ -715,6 +710,20 @@ SCLOrkQuNeo {
 	prAllPadLEDsOff {
 		(36..51).do({ |midinote| this.prSendPadLEDs(midinote, \off) });
 	}
+
+	prSendOtherLEDs { |number, value|
+
+		// for all other non-pad buttons and sliders
+
+		// LEFT / RIGHT arrow buttons (4 pairs), incoming midinotes 11-18 mapped to outgoing MIDIOut notes 36-43, default colors
+		if( (number >= 11) && (number <= 18), { toQuNeo.noteOn(0, number+25, value) });
+
+		// SKIP Rhombus (incoming midinote 19), as I previously hard coded it elsewhere because of need to mix colors. Leave as is.
+
+		// UP / DOWN arrow buttons (2 pairs), incoming midinotes 20-23 mapped to outgoing MIDIOut notes 46-49, default colors
+		if( (number >= 20) && (number <= 23), { toQuNeo.noteOn(0, number+26, value) });
+	}
+
 
 	// Note: for some reason the Long Slider and the two Rotaries (Darth Vader's eyes) won't turn off completely. Instead they just go to location 0. All other LEDs do turn off with this method.
 	prAllLEDsOff {
