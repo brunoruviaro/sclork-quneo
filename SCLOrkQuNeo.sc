@@ -204,6 +204,14 @@ SCLOrkQuNeo {
 						velocity: 0,
 						midinote: midinote
 				)});
+				// Send LEDs back to QuNeo if applicable
+				if(midiIsOn, {
+					if(buttonArray[midinote].value==0, {
+						this.prSendOtherLEDs(midinote, 0)
+					}, {
+						this.prSendOtherLEDs(midinote, 127)
+					})
+				});
 			})
 			.minHeight_(42)
 		});
@@ -714,6 +722,10 @@ SCLOrkQuNeo {
 	prSendOtherLEDs { |number, value|
 
 		// for all other non-pad buttons and sliders
+
+		// REC, STOP, PLAY buttons, incoming miditnoes 24-25-26 mapped to outgoing MIDIOut notes 33-34-35, default colors
+		if( (number >= 24) && (number <= 26), { toQuNeo.noteOn(0, number+9, value) });
+
 
 		// LEFT / RIGHT arrow buttons (4 pairs), incoming midinotes 11-18 mapped to outgoing MIDIOut notes 36-43, default colors
 		if( (number >= 11) && (number <= 18), { toQuNeo.noteOn(0, number+25, value) });
