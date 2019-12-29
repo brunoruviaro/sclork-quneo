@@ -52,6 +52,7 @@ SCLOrkQuNeo {
 	var bank;
 	var toQuNeo;
 	var midiIsOn;
+	var makeSlider;
 
 	var <>onButtonChange;
 	var <>midiChannel = 11; // SCLOrk QuNeos are always channel 11
@@ -115,6 +116,13 @@ SCLOrkQuNeo {
 			"Closed GUI, freeing all MIDIdefs".postln;
 			MIDIdef.freeAll;
 			// add code to turn off all LEDs
+		};
+
+		makeSlider = { | parent, bounds |
+			Slider.new(parent, bounds).action_({ |ccValue|
+				ccValue = if(ccValue.isNumber, {ccValue}, {ccValue.value.linlin(0, 1, 0, 127).round(1)});
+				ccValue.postln;
+			})
 		};
 
 		// ================
@@ -297,7 +305,7 @@ SCLOrkQuNeo {
 				})
 			});
 			// ... followed by a horizontal slider
-			sliderArray[row[2]] = Slider(parent: leftBottom, bounds: 170@35);
+			sliderArray[row[2]] = makeSlider.value(parent: leftBottom, bounds: 170@35);
 		});
 
 		// =============
@@ -459,13 +467,13 @@ SCLOrkQuNeo {
 			10, // empty space
 			HLayout(
 				10,
-				Slider.new(parent: vader),
+				makeSlider.value(vader),
 				10,
-				Slider.new(parent: vader),
+				makeSlider.value(vader),
 				10,
-				Slider.new(parent: vader),
+				makeSlider.value(vader),
 				10,
-				Slider.new(parent: vader),
+				makeSlider.value(vader),
 				10
 			)
 		);
@@ -517,7 +525,7 @@ SCLOrkQuNeo {
 			.maxWidth_(55)
 		});
 
-		slider = Slider(footer).orientation_(\horizontal);
+		sliderArray[10] = makeSlider.value(footer).orientation_(\horizontal);
 
 		footer.layout = HLayout(
 			2,
@@ -527,7 +535,7 @@ SCLOrkQuNeo {
 				buttonArray[21]
 			),
 			// footer long slider
-			[slider, stretch: 1],
+			[sliderArray[10], stretch: 1],
 			// footer right buttons
 			VLayout(
 				buttonArray[22],
@@ -562,6 +570,17 @@ SCLOrkQuNeo {
 				"Make sure you are in QuNeo preset #3:".postln;
 				"1. Push small round button on top left corner of QuNeo".postln;
 				"2. Push pad #3 to select the third preset".postln;
+
+				MIDIdef.cc(
+					key: \sliders,
+					func: { | ccValue, ccNumber |
+						{
+							sliderArray[ccNumber].valueAction = ccValue;
+						}.defer;
+					},
+					ccNum: (0..10),
+					chan: midiChannel
+				).permanent_(true);
 
 				MIDIdef.noteOn(
 					key: \nose,
@@ -725,7 +744,6 @@ SCLOrkQuNeo {
 
 		// REC, STOP, PLAY buttons, incoming miditnoes 24-25-26 mapped to outgoing MIDIOut notes 33-34-35, default colors
 		if( (number >= 24) && (number <= 26), { toQuNeo.noteOn(0, number+9, value) });
-
 
 		// LEFT / RIGHT arrow buttons (4 pairs), incoming midinotes 11-18 mapped to outgoing MIDIOut notes 36-43, default colors
 		if( (number >= 11) && (number <= 18), { toQuNeo.noteOn(0, number+25, value) });
