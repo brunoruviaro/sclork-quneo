@@ -1,23 +1,14 @@
 
 /*
+
+Working on "labels" branch now
+
 z = SCLOrkQuNeo.new;
 z.onButtonChange = { |velocity, midinote| ["WOW", velocity, midinote].postln };
 
 
 MIDIFunc.trace(true);
 MIDIFunc.trace(false);
-
-NEXT STEPS:
-I ended on Wed Dec 19 with
-- MIDIdef.noteOn for pads only (need to create others for other non-pad buttons)
-- presets \normal and \toggle chosen from GUI only
-- user does NOT need to switch presets on QuNeo itself (always use Preset 3)
-- QuNeo is set to 'normal' mode. SC code takes care of interpreting it as 'normal' (one shot) or 'toggle' (ignores note off).
-- LEDs commands for PADS are sent remotely from SC, not locally in QuNeo.
-- Added important latency_(0) for MIDIOut -- avoid delay in LEDs activation
-- NEXT STEPS: create MIDIdefs for sliders and other buttons
-- Create MIDI on/off button on GUI
-- window.onClose should free all MIDIdefs and whatever else needed
 
 
 
