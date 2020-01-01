@@ -2,6 +2,12 @@
 /*
 
 Working on "labels" branch now
+Dec 31
+
+all sliders now have labels
+they are structured as statictext objects placed in a dedicated composite view sitting right under the slider itself. Slider color is made to be transparent so we can see through the slider.
+
+next step, to make these labels customazible (i.e. create changeSliderLabel function)
 
 z = SCLOrkQuNeo.new;
 z.onButtonChange = { |velocity, midinote| ["WOW", velocity, midinote].postln };
@@ -44,6 +50,10 @@ SCLOrkQuNeo {
 	var toQuNeo;
 	var midiIsOn;
 	var makeSlider;
+	var makeSliderLabel;
+	var leftBottomSliderLabels;
+	var vaderSliderLabels;
+	var footerSliderLabel;
 
 	var <>onButtonChange;
 	var <>midiChannel = 11; // SCLOrk QuNeos are always channel 11
@@ -109,11 +119,23 @@ SCLOrkQuNeo {
 			// add code to turn off all LEDs
 		};
 
+		makeSliderLabel = { | parent, slider |
+			var composite = CompositeView.new(parent, slider.bounds);
+			StaticText.new(
+				parent: composite,
+				bounds: Rect(0, 0, composite.bounds.width, composite.bounds.height))
+			.string_("bruno".scramble)
+			.stringColor_(Color.black)
+			.background_(Color.white)
+			.align_(\center);
+
+		};
+
 		makeSlider = { | parent, bounds |
 			Slider.new(parent, bounds).action_({ |ccValue|
 				ccValue = if(ccValue.isNumber, {ccValue}, {ccValue.value.linlin(0, 1, 0, 127).round(1)});
 				ccValue.postln;
-			})
+			}).background_(Color.gray(1, 0));
 		};
 
 		// ================
@@ -226,10 +248,6 @@ SCLOrkQuNeo {
 			[buttonArray[24], align: \bottom],
 			[buttonArray[25], align: \bottom],
 			[buttonArray[26], align: \bottom],
-			// 20,
-			// buttonArray[24],
-			// buttonArray[25],
-			// buttonArray[26],
 			20
 		);
 
@@ -238,6 +256,16 @@ SCLOrkQuNeo {
 		// *** leftBottom ***
 		// ==================
 
+
+		leftBottomSliderLabels = CompositeView(
+			parent: window,
+			bounds: Rect(
+				left: 0,
+				top: leftTopH,
+				width: leftBottomW,
+				height: leftBottomH
+			)
+		);
 
 		leftBottom = CompositeView(
 			parent: window,
@@ -297,6 +325,8 @@ SCLOrkQuNeo {
 			});
 			// ... followed by a horizontal slider
 			sliderArray[row[2]] = makeSlider.value(parent: leftBottom, bounds: 170@35);
+			makeSliderLabel.value(leftBottomSliderLabels, sliderArray[row[2]]);
+			// leftBottomSlider.front;
 		});
 
 		// =============
@@ -388,7 +418,7 @@ SCLOrkQuNeo {
 		// *** vader ***
 		// =============
 
-		vader = CompositeView(
+		vaderSliderLabels = CompositeView(
 			parent: window,
 			bounds: Rect(
 				left: 0,
@@ -398,9 +428,15 @@ SCLOrkQuNeo {
 			)
 		);
 
-		// vader.background = Color.gray;
-
-		// , bounds: Rect(140, 15, 95, 95)
+		vader = CompositeView(
+			parent: window,
+			bounds: Rect(
+				left: 0,
+				top: leftTopH + leftBottomH,
+				width: vaderW,
+				height: vaderH
+			)
+		);
 
 		k1 = Knob(parent: vader).minHeight_(105);
 		k2 = Knob(parent: vader).minHeight_(105);
@@ -414,13 +450,13 @@ SCLOrkQuNeo {
 			["", Color.gray, Color.red],
 		];
 
-		// change 16-button layer:
+		// nose action to change 16-button layer (switch banks):
 		nose.action = { |button|
 			bank = button.value;
 			right[bank].front;
 
 			// toggle preset housekeeping: turn off previous bank LEDs, and redraw for new bank (in case any pads were on from a previous visit to that bank)
-			if(guiPreset==\toggle, {
+			if( (guiPreset==\toggle) && (midiIsOn), {
 				this.prRedrawPadLEDsAtBankSwitch;
 			});
 
@@ -430,25 +466,32 @@ SCLOrkQuNeo {
 			});
 
 			// send LED info back to QuNeo Rhombus button:
-			switch(bank,
-				0, { // LEDs off
-					toQuNeo.noteOn(0, 44, 0);
-					toQuNeo.noteOn(0, 45, 0);
-				},
-				1, { // LEDs green
-					toQuNeo.noteOn(0, 44, 127);
-					toQuNeo.noteOn(0, 45, 0);
-				},
-				2, { // LEDs orange
-					toQuNeo.noteOn(0, 44, 127);
-					toQuNeo.noteOn(0, 45, 127);
-				},
-				3, { // LEDs red
-					toQuNeo.noteOn(0, 44, 0);
-					toQuNeo.noteOn(0, 45, 127);
-				}
-			);
+			if(midiIsOn, {
+				switch(bank,
+					0, { // LEDs off
+						toQuNeo.noteOn(0, 44, 0);
+						toQuNeo.noteOn(0, 45, 0);
+					},
+					1, { // LEDs green
+						toQuNeo.noteOn(0, 44, 127);
+						toQuNeo.noteOn(0, 45, 0);
+					},
+					2, { // LEDs orange
+						toQuNeo.noteOn(0, 44, 127);
+						toQuNeo.noteOn(0, 45, 127);
+					},
+					3, { // LEDs red
+						toQuNeo.noteOn(0, 44, 0);
+						toQuNeo.noteOn(0, 45, 127);
+					}
+				);
+			})
 		};
+
+		sliderArray[6] = makeSlider.value(vader);
+		sliderArray[7] = makeSlider.value(vader);
+		sliderArray[8] = makeSlider.value(vader);
+		sliderArray[9] = makeSlider.value(vader);
 
 		vader.layout = VLayout(
 			HLayout(
@@ -458,21 +501,37 @@ SCLOrkQuNeo {
 			10, // empty space
 			HLayout(
 				10,
-				makeSlider.value(vader),
+				sliderArray[6],
 				10,
-				makeSlider.value(vader),
+				sliderArray[7],
 				10,
-				makeSlider.value(vader),
+				sliderArray[8],
 				10,
-				makeSlider.value(vader),
+				sliderArray[9],
 				10
 			)
 		);
+
+		[6, 7, 8, 9].do({ |i|
+			makeSliderLabel.value(vaderSliderLabels, sliderArray[i]);
+		});
+
+
 
 
 		// ===============
 		// *** footer ***
 		// ===============
+
+		footerSliderLabel = CompositeView(
+			parent: window,
+			bounds: Rect(
+				left: vaderW,
+				top: rightH,
+				width: footerW,
+				height: footerH
+			)
+		);
 
 		footer = CompositeView(
 			parent: window,
@@ -535,10 +594,42 @@ SCLOrkQuNeo {
 			15
 		);
 
+		makeSliderLabel.value(footerSliderLabel, sliderArray[10]);
+
 	} // end of init
 
-	onUIButtonChange { |velocity, midinote|
+
+
+	onUIButtonChange { | velocity, midinote |
 		this.onButtonChange.value(velocity, midinote)
+	}
+
+	// Customize label on pad buttons. Strings that are too long will not fit nicely on button. One or two short words are best. You can force a line break in the string using \n if needed.
+	// examples for help file:
+	/*
+	(
+	z.changeButtonLabel(midinote: 36, string: "POPCORN \n WOW");
+	z.changeButtonLabel(midinote: 37, string: "REVERB");
+	z.changeButtonLabel(midinote: 45, string: "A LOT OF \n DELAY", keepNumber: false);
+	z.changeButtonLabel(midinote: 56, string: "echoes \n galore...");
+	z.changeButtonLabel(midinote: 67, string: "A BIT OF \n DELAY", keepNumber: false);
+	)
+	*/
+
+	changeButtonLabel { | midinote, string, keepNumber = true|
+
+		var newLabel;
+
+		if(keepNumber, {
+			newLabel = midinote.asString ++ ". " ++ string
+		}, {
+			newLabel = string;
+		});
+
+		buttonArray[midinote].states_([
+			[newLabel, Color.black, Color.white],
+			[newLabel, Color.white, Color.black]
+		])
 	}
 
 	onConnectMIDI { | doConnect |
