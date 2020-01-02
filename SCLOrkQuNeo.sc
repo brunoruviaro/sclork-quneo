@@ -138,7 +138,8 @@ SCLOrkQuNeo {
 
 		makeSlider = { | parent, bounds, ccNum |
 			Slider.new(parent, bounds).action_({ |ccValue|
-				ccValue = if(ccValue.isNumber, {ccValue}, {ccValue.value.linlin(0, 1, 0, 127).round(1)});
+				// ccValue = if(ccValue.isNumber, {ccValue}, {ccValue.value.linlin(0, 1, 0, 127).round(1)});
+				ccValue.value.postln;
 				// to be implemented:
 				this.onUISliderChange(ccValue, ccNum);
 				// if midiIsOn, send LED back to QuNeo
@@ -176,7 +177,8 @@ SCLOrkQuNeo {
 					"Almost there...".postln;
 					1.wait;
 					if(MIDIClient.initialized, {
-						this.onConnectMIDI(true)
+						this.connectQuNeo;
+						this.onConnectMIDI(true);
 					}, {
 						"Failed to initialize MIDI".postln;
 					});
@@ -702,7 +704,7 @@ SCLOrkQuNeo {
 					key: \sliders,
 					func: { | ccValue, ccNumber |
 						{
-							sliderArray[ccNumber].valueAction = ccValue;
+							sliderArray[ccNumber].valueAction = ccValue.linlin(0, 127, 0, 1);
 						}.defer;
 					},
 					ccNum: (0..10),
@@ -792,6 +794,7 @@ SCLOrkQuNeo {
 				).permanent_(true);
 
 
+
 			}, {
 				"Unable to find QuNeo".postln;
 				this.isPhysicalDeviceConnected(verbose: true);
@@ -836,6 +839,47 @@ SCLOrkQuNeo {
 
 		^(quneoCmdLine && quneoSC);
 	}
+
+	connectQuNeo {
+		var pipe = Pipe.new("jack_lsp", "r");
+		var line = pipe.getLine; // get the first line right away
+		var qOut, qIn;
+		var scOut, scIn;
+
+		// go through all available ports (overkill, but OK for now)
+	while({ line.notNil }, {
+			// make sure it's a string
+			line = line.asString;
+
+			// Is this a QuNeo port? If so, save it
+			if(line.containsi("QUNEO"), {
+				if(line.containsi("capture"), { qOut = line });
+				if(line.containsi("playback"), { qIn = line });
+			});
+
+			// Is this a SuperCollider MIDI port? If so, save it
+			if(line.containsi("a2j:SuperCollider"), {
+				if(line.containsi("out0"), { scOut = line });
+				if(line.containsi("in0"), { scIn = line });
+			});
+
+			// get a new line before while runs again
+			line = pipe.getLine;
+	});
+		pipe.close;
+		["qOut", qOut].postln;
+		["qIn", qIn].postln;
+		["scOut", scOut].postln;
+		["scIn", scIn].postln;
+
+		// Make the right connections
+		if( (qOut.notNil) && (qIn.notNil) && (scOut.notNil) && (scIn.notNil), {
+			("jack_connect \"" ++ qOut ++ "\" \"" ++ scIn ++ "\"").unixCmd;
+			("jack_connect \"" ++ qIn ++ "\" \"" ++ scOut ++ "\"").unixCmd;
+		}, {
+			"Some of the ports could not be found, no connections made".postln;
+		})
+}
 
 	prSendPadLEDs { |midinote, color|
 
