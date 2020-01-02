@@ -834,6 +834,7 @@ SCLOrkQuNeo {
 		}, {
 			"free all MIDIdefs".postln;
 			MIDIdef.freeAll;
+			midiIsOn = false;
 		});
 	}
 
