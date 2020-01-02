@@ -42,14 +42,13 @@ SCLOrkQuNeo {
 	var leftBottom, leftBottomW, leftBottomH; // buttons and Hsliders above vader
 	var right, rightW, rightH; // 16-button main panel
 	var vader, vaderW, vaderH; // darth vader (lower left box)
-	var footer, footerW, footerH; // buttons and slides below 16-button panel
-	var up, down, k1, k2, nose; // components of vader: 2 knobs, 1 nose, 4 Vsliders
-	var slider;
+	var footer, footerW, footerH; // buttons and long slider below 16-button panel
+	var nose;
 	var guiPreset;
 	var bank;
 	var toQuNeo;
 	var midiIsOn;
-	var makeSlider;
+	var makeSlider, makeKnob;
 	var makeSliderLabel;
 	var leftBottomSliderLabels;
 	var vaderSliderLabels;
@@ -137,13 +136,28 @@ SCLOrkQuNeo {
 		};
 
 		makeSlider = { | parent, bounds, ccNum |
-			Slider.new(parent, bounds).action_({ |ccValue|
-				// ccValue = if(ccValue.isNumber, {ccValue}, {ccValue.value.linlin(0, 1, 0, 127).round(1)});
-				ccValue.value.postln;
-				// to be implemented:
-				this.onUISliderChange(ccValue, ccNum);
-				// if midiIsOn, send LED back to QuNeo
+			Slider.new(parent, bounds).action_({ |slider|
+				// Hook to user-customazible slider function (note that slider value is between 0 and 1, not 127)
+				this.onUISliderChange(slider.value, ccNum);
+				// Send LEDs back to QuNeo if applicable
+				if(midiIsOn, {
+					this.prSendSliderLED(ccNum, slider.value)
+				});
+
 			}).background_(Color.gray(1, 0));
+		};
+
+		makeKnob = { | parent, ccNum |
+			Knob(parent).minHeight_(105)
+			.action = { |knob|
+				// Hook to user-customazible knob functions
+				// Works just like a slider, so we use that method
+				this.onUISliderChange(knob.value, ccNum);
+				// Send LEDs back to QuNeo if applicable
+				if(midiIsOn, {
+					this.prSendKnobLED(ccNum, knob.value)
+				});
+			};
 		};
 
 		// ================
@@ -447,8 +461,9 @@ SCLOrkQuNeo {
 			)
 		);
 
-		k1 = Knob(parent: vader).minHeight_(105);
-		k2 = Knob(parent: vader).minHeight_(105);
+		// create Knobs, place it in sliderArray (makes sense here, they are just like sliders)
+		sliderArray[4] = makeKnob.value(parent: vader, ccNum: 4);
+		sliderArray[5] = makeKnob.value(parent: vader, ccNum: 5);
 
 		// nose is hard coded in the right spot
 		nose = Button(parent: vader, bounds: Rect(vader.bounds.width / 2 - 15, 95, 30, 30));
@@ -504,7 +519,7 @@ SCLOrkQuNeo {
 
 		vader.layout = VLayout(
 			HLayout(
-				k1, k2
+				sliderArray[4], sliderArray[5]
 
 			),
 			10, // empty space
@@ -703,8 +718,24 @@ SCLOrkQuNeo {
 				MIDIdef.cc(
 					key: \sliders,
 					func: { | ccValue, ccNumber |
+						var sliderValue, knobValue;
 						{
-							sliderArray[ccNumber].valueAction = ccValue.linlin(0, 127, 0, 1);
+							if((ccNumber<4) || (ccNumber>5), {
+								// do this for regular sliders (not knobs)
+								sliderValue = ccValue.linlin(0, 127, 0, 1);
+								sliderArray[ccNumber].valueAction = sliderValue;
+							}, {
+								// ...and for the two knobs:
+								// weird scaling. Ignore knob-bottom numbers (51-77) to mimic SC GUI where knob starts at 5pm and goes up to 4pm.
+								if(ccValue<51, {
+									knobValue = ccValue.linlin(0, 50, 0.5, 1);
+									sliderArray[ccNumber].valueAction = knobValue;
+								});
+								if(ccValue>77, {
+									knobValue = ccValue.linlin(78, 127, 0, 0.5);
+									sliderArray[ccNumber].valueAction = knobValue;
+								});
+							});
 						}.defer;
 					},
 					ccNum: (0..10),
@@ -847,7 +878,7 @@ SCLOrkQuNeo {
 		var scOut, scIn;
 
 		// go through all available ports (overkill, but OK for now)
-	while({ line.notNil }, {
+		while({ line.notNil }, {
 			// make sure it's a string
 			line = line.asString;
 
@@ -865,7 +896,7 @@ SCLOrkQuNeo {
 
 			// get a new line before while runs again
 			line = pipe.getLine;
-	});
+		});
 		pipe.close;
 		["qOut", qOut].postln;
 		["qIn", qIn].postln;
@@ -879,7 +910,7 @@ SCLOrkQuNeo {
 		}, {
 			"Some of the ports could not be found, no connections made".postln;
 		})
-}
+	}
 
 	prSendPadLEDs { |midinote, color|
 
@@ -925,6 +956,40 @@ SCLOrkQuNeo {
 		if( (number >= 20) && (number <= 23), { toQuNeo.noteOn(0, number+26, value) });
 	}
 
+	prSendSliderLED { |ccNum, sliderValue|
+		var sliderLEDccNumber;
+
+		sliderLEDccNumber = switch(ccNum,
+			// horizontal sliders
+			0, {11},
+			1, {10},
+			2, {9},
+			3, {8},
+			// vertical sliders
+			6, {1},
+			7, {2},
+			8, {3},
+			9, {4},
+			// long slider
+			10, {5},
+		);
+
+		// slider value comes in between 0-1, need to convert to 0-127
+		toQuNeo.control(0, sliderLEDccNumber, sliderValue.linlin(0, 1, 0, 127));
+	}
+
+	prSendKnobLED { |ccNum, knobValue|
+		var knobLEDccNumber, ccValue;
+		knobLEDccNumber = switch(ccNum,
+			4, {6},
+			5, {7}
+		);
+		// weird re-scaling of numbers because we want the Rotary on QuNeo to behave like the Knob on SuperCollider. The QuNeo rotary has 0 at noon position, but SC's knobs have zero at 7pm and 1 at 5pm.
+		ccValue = knobValue.linlin(0, 1, 85, 183).mod(127);
+		toQuNeo.control(0, knobLEDccNumber, ccValue);
+
+
+	}
 
 	// Note: for some reason the Long Slider and the two Rotaries (Darth Vader's eyes) won't turn off completely. Instead they just go to location 0. All other LEDs do turn off with this method.
 	prAllLEDsOff {
