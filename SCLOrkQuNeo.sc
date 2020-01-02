@@ -1,8 +1,12 @@
 
 /*
-
-Working on "labels" branch now
 Jan 1st 2020
+
+// Last mods: added onSliderChange method, added changeSliderLabel method
+// Next: test it again with QuNeo, in particular the sliders
+// - implement sliders sync (values and LEDs)
+// - create documentation
+// - Then put it into SCLOrkTools
 
 z = SCLOrkQuNeo.new;
 z.onButtonChange = { |velocity, midinote| ["BUTTON!", velocity, midinote].postln };
