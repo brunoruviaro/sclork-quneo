@@ -2,15 +2,11 @@
 /*
 
 Working on "labels" branch now
-Dec 31
-
-all sliders now have labels
-they are structured as statictext objects placed in a dedicated composite view sitting right under the slider itself. Slider color is made to be transparent so we can see through the slider.
-
-next step, to make these labels customazible (i.e. create changeSliderLabel function)
+Jan 1st 2020
 
 z = SCLOrkQuNeo.new;
-z.onButtonChange = { |velocity, midinote| ["WOW", velocity, midinote].postln };
+z.onButtonChange = { |velocity, midinote| ["BUTTON!", velocity, midinote].postln };
+z.onSliderChange = { |ccValue, ccNum| ["SLIDING...", ccValue, ccNum].postln };
 
 
 MIDIFunc.trace(true);
@@ -36,7 +32,7 @@ ___________________________
 
 SCLOrkQuNeo {
 	var buttonArray, buttonNamesAsMidinotes;
-	var sliderArray;
+	var sliderArray, sliderLabelArray;
 	var window, windowWidth, windowHeight; // main window
 	var leftTop, leftTopW, leftTopH; // top left 4-button row
 	var leftBottom, leftBottomW, leftBottomH; // buttons and Hsliders above vader
@@ -56,6 +52,7 @@ SCLOrkQuNeo {
 	var footerSliderLabel;
 
 	var <>onButtonChange;
+	var <>onSliderChange;
 	var <>midiChannel = 11; // SCLOrk QuNeos are always channel 11
 
 
@@ -79,6 +76,9 @@ SCLOrkQuNeo {
 		// create empty array to hold all sliders
 		// (each slider stored at index corresponding to its midi cc number)
 		sliderArray = Array.newClear(127);
+
+		// create empty array to hold StaticText objects sitting underneath sliders which will be their labels
+		sliderLabelArray = Array.newClear(127);
 
 		// create main window
 		windowWidth = 840;
@@ -119,22 +119,25 @@ SCLOrkQuNeo {
 			// add code to turn off all LEDs
 		};
 
-		makeSliderLabel = { | parent, slider |
+		makeSliderLabel = { | parent, ccNum |
+			var slider = sliderArray[ccNum];
 			var composite = CompositeView.new(parent, slider.bounds);
-			StaticText.new(
+			sliderLabelArray[ccNum] = StaticText.new(
 				parent: composite,
 				bounds: Rect(0, 0, composite.bounds.width, composite.bounds.height))
-			.string_("bruno".scramble)
+			.string_("cc"++ccNum.asString)
 			.stringColor_(Color.black)
 			.background_(Color.white)
 			.align_(\center);
 
 		};
 
-		makeSlider = { | parent, bounds |
+		makeSlider = { | parent, bounds, ccNum |
 			Slider.new(parent, bounds).action_({ |ccValue|
 				ccValue = if(ccValue.isNumber, {ccValue}, {ccValue.value.linlin(0, 1, 0, 127).round(1)});
-				ccValue.postln;
+				// to be implemented:
+				this.onUISliderChange(ccValue, ccNum);
+				// if midiIsOn, send LED back to QuNeo
 			}).background_(Color.gray(1, 0));
 		};
 
@@ -324,8 +327,8 @@ SCLOrkQuNeo {
 				})
 			});
 			// ... followed by a horizontal slider
-			sliderArray[row[2]] = makeSlider.value(parent: leftBottom, bounds: 170@35);
-			makeSliderLabel.value(leftBottomSliderLabels, sliderArray[row[2]]);
+			sliderArray[row[2]] = makeSlider.value(parent: leftBottom, bounds: 170@35, ccNum: row[2]);
+			makeSliderLabel.value(leftBottomSliderLabels, row[2]);
 			// leftBottomSlider.front;
 		});
 
@@ -488,10 +491,10 @@ SCLOrkQuNeo {
 			})
 		};
 
-		sliderArray[6] = makeSlider.value(vader);
-		sliderArray[7] = makeSlider.value(vader);
-		sliderArray[8] = makeSlider.value(vader);
-		sliderArray[9] = makeSlider.value(vader);
+		sliderArray[6] = makeSlider.value(parent: vader, ccNum: 6);
+		sliderArray[7] = makeSlider.value(parent: vader, ccNum: 7);
+		sliderArray[8] = makeSlider.value(parent: vader, ccNum: 8);
+		sliderArray[9] = makeSlider.value(parent: vader, ccNum: 9);
 
 		vader.layout = VLayout(
 			HLayout(
@@ -513,7 +516,7 @@ SCLOrkQuNeo {
 		);
 
 		[6, 7, 8, 9].do({ |i|
-			makeSliderLabel.value(vaderSliderLabels, sliderArray[i]);
+			makeSliderLabel.value(vaderSliderLabels, i);
 		});
 
 
@@ -575,7 +578,7 @@ SCLOrkQuNeo {
 			.maxWidth_(55)
 		});
 
-		sliderArray[10] = makeSlider.value(footer).orientation_(\horizontal);
+		sliderArray[10] = makeSlider.value(parent: footer, ccNum: 10).orientation_(\horizontal);
 
 		footer.layout = HLayout(
 			2,
@@ -594,7 +597,7 @@ SCLOrkQuNeo {
 			15
 		);
 
-		makeSliderLabel.value(footerSliderLabel, sliderArray[10]);
+		makeSliderLabel.value(footerSliderLabel, 10);
 
 	} // end of init
 
@@ -602,6 +605,10 @@ SCLOrkQuNeo {
 
 	onUIButtonChange { | velocity, midinote |
 		this.onButtonChange.value(velocity, midinote)
+	}
+
+	onUISliderChange { | ccValue, ccNum |
+		this.onSliderChange.value(ccValue, ccNum)
 	}
 
 	// Customize label on pad buttons. Strings that are too long will not fit nicely on button. One or two short words are best. You can force a line break in the string using \n if needed.
@@ -616,7 +623,7 @@ SCLOrkQuNeo {
 	)
 	*/
 
-	changeButtonLabel { | midinote, string, keepNumber = true|
+	changeButtonLabel { | midinote, string, keepNumber = true |
 
 		var newLabel;
 
@@ -631,6 +638,40 @@ SCLOrkQuNeo {
 			[newLabel, Color.white, Color.black]
 		])
 	}
+
+
+	/*
+	// Customize slider labels. You can force a line break in the string using \n if needed. Set keepNumber to false to remove the default MIDI cc number label.
+
+	For help file, examples on how to change slider labels:
+
+	z.changeSliderLabel(ccNum: 0, string: "tomatos");
+	z.changeSliderLabel(ccNum: 1, string: "carrots");
+	z.changeSliderLabel(ccNum: 2, string: "onions");
+	z.changeSliderLabel(ccNum: 3, string: "garlic");
+
+	z.changeSliderLabel(ccNum: 6, string: "\nwow\nmany\nlines");
+	z.changeSliderLabel(ccNum: 7, string: "\noops");
+	z.changeSliderLabel(ccNum: 8, string: "hi", keepNumber: false);
+	z.changeSliderLabel(ccNum: 9, string: "bye", keepNumber: false);
+
+	z.changeSliderLabel(ccNum: 10, string: "maybe this is master volume", keepNumber: false);
+
+	*/
+	changeSliderLabel { | ccNum, string, keepNumber = true |
+
+		var newLabel;
+
+		if(keepNumber, {
+			newLabel = "cc" ++ (ccNum.asString) ++ " " ++ string
+		}, {
+			newLabel = string;
+		});
+
+		sliderLabelArray[ccNum].string = newLabel;
+	}
+
+
 
 	onConnectMIDI { | doConnect |
 		if (doConnect, {
