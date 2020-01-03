@@ -1,22 +1,22 @@
 
 /*
-Jan 1st 2020
+SCLOrkQuNeo
 
-// Last mods: added onSliderChange method, added changeSliderLabel method
-// Next: test it again with QuNeo, in particular the sliders
-// - implement sliders sync (values and LEDs)
-// - create documentation
-// - Then put it into SCLOrkTools
+Graphical User Interface mirroring the QuNeo MIDI controller. It can be used as a standalone GUI in SuperCollider, or in conjunction with an actual QuNeo hardware. When used with the hardware, GUI and QuNeo mirror each other (ie, pushing a button on the device will be reflected on the GUI and vice-versa).
+
+User can create assign custom functions to any button or slider in the following way:
 
 z = SCLOrkQuNeo.new;
 z.onButtonChange = { |velocity, midinote| ["BUTTON!", velocity, midinote].postln };
 z.onSliderChange = { |ccValue, ccNum| ["SLIDING...", ccValue, ccNum].postln };
 
+GUI design by Tanya Sonker, Summer 2019.
+MIDI functionality and class by Bruno Ruviaro, Fall 2019.
+Thanks to Luke Nihlen for giving pointers and example code for writing it as a SC Class.
 
-MIDIFunc.trace(true);
-MIDIFunc.trace(false);
 
 
+GUI design:
 
 These variables hold CompositeViews placed onto main window:
 ___________________________
